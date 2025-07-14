@@ -10,14 +10,18 @@ plugins:                       # 启用的插件列表
   - jekyll-feed                # RSS 订阅插件
   - jekyll-seo-tag             # SEO 优化插件
 
+# Markdown 设置以支持 MathJax
+markdown: kramdown
+kramdown:
+  input: GFM
+  math_engine: mathjax
+  syntax_highlighter: rouge
+
 # baseurl: "/HaHaMath"         # 站点子路径（如部署到 user.github.io/HaHaMath/ 时填写）
 # url: "https://Pokespace.github.io" # 站点主域名
 # author:                      # 作者信息
 #   name: Pokespace
 #   email: your@email.com
-# markdown: kramdown           # Markdown 解析器
-# kramdown:
-#   input: GFM                 # 支持 GitHub 风格 Markdown
 # paginate: 5                  # 每页文章数（需配合分页插件）
 # paginate_path: "/page:num/"  # 分页路径格式
 # timezone: Asia/Shanghai      # 时区设置
