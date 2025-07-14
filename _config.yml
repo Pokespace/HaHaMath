@@ -1,7 +1,33 @@
-title: HaHaMath
-lang: zh-CN
-description: "数学学习与分享"
-theme: minima
-plugins:
-  - jekyll-feed
-  - jekyll-seo-tag
+# Jekyll 站点配置文件
+title: HaHaMath                # 站点标题
+lang: zh-CN                    # 站点语言
+description: "数学学习与分享"   # 站点描述
+theme: minima                  # 使用的主题（如 minima、jekyll-theme-cayman 等）
+plugins:                       # 启用的插件列表
+  - jekyll-feed                # RSS 订阅插件
+  - jekyll-seo-tag             # SEO 优化插件
+
+# baseurl: "/HaHaMath"         # 站点子路径（如部署到 user.github.io/HaHaMath/ 时填写）
+# url: "https://Pokespace.github.io" # 站点主域名
+# author:                      # 作者信息
+#   name: Pokespace
+#   email: your@email.com
+# markdown: kramdown           # Markdown 解析器
+# kramdown:
+#   input: GFM                 # 支持 GitHub 风格 Markdown
+# paginate: 5                  # 每页文章数（需配合分页插件）
+# paginate_path: "/page:num/"  # 分页路径格式
+# timezone: Asia/Shanghai      # 时区设置
+# show_excerpts: true          # 是否显示摘要
+# excerpt_separator: "<!--more-->" # 摘要分隔符
+# collections:                 # 自定义内容集合
+#   tutorials:
+#     output: true
+#     permalink: /tutorials/:path/
+# defaults:                    # 默认 Front Matter 设置
+#   - scope:
+#       path: ""
+#       type: "posts"
+#     values:
+#       layout: "post"
+#       author: "Pokespace"
