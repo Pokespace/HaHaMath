@@ -7,7 +7,6 @@ lang: zh-CN                    # 站点语言
 description: "数学学习与分享"   # 站点描述
 theme: minima                  # 使用的主题（如 minima、jekyll-theme-cayman 等）
 plugins:                       # 启用的插件列表
-  - jekyll-feed                # RSS 订阅插件
   - jekyll-seo-tag             # SEO 优化插件
 
 # Markdown 设置以支持 MathJax
