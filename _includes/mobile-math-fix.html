@@ -1,143 +1,366 @@
-<!-- 移动端数学公式渲染修复脚本 -->
+<!-- 移动端数学公式渲染增强修复脚本 -->
 <script>
 (function() {
   'use strict';
   
-  // 检测安卓浏览器
-  var isAndroid = /Android/i.test(navigator.userAgent);
-  var isOldAndroid = /Android [1-4]/i.test(navigator.userAgent);
+  // 增强的设备检测
+  var userAgent = navigator.userAgent;
+  var isAndroid = /Android/i.test(userAgent);
+  var isIOS = /iPad|iPhone|iPod/.test(userAgent);
+  var isOldAndroid = /Android [1-4]/i.test(userAgent);
+  var isWeChat = /MicroMessenger/i.test(userAgent);
+  var isQQ = /QQ\//i.test(userAgent);
+  var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+  var isChrome = /Chrome/i.test(userAgent);
+  var isSafari = /Safari/i.test(userAgent) && !isChrome;
   
-  if (isAndroid) {
-    // 安卓设备特殊处理
-    document.addEventListener('DOMContentLoaded', function() {
+  // 为移动浏览器添加标识类
+  if (isMobile) {
+    document.documentElement.classList.add('mobile-device');
+    if (isAndroid) document.documentElement.classList.add('android-device');
+    if (isIOS) document.documentElement.classList.add('ios-device');
+    if (isWeChat) document.documentElement.classList.add('wechat-browser');
+    if (isQQ) document.documentElement.classList.add('qq-browser');
+  }
+  
+  // 移动端数学公式渲染监控和修复
+  function initMobileMathFix() {
+    var mathRenderAttempts = 0;
+    var maxRenderAttempts = 3;
+    
+    function checkAndFixMathRendering() {
+      mathRenderAttempts++;
       
-      // 为老版本安卓提供降级方案
-      if (isOldAndroid) {
-        console.log('检测到老版本安卓，启用降级方案');
-        
-        // 替换复杂公式为简化版本
-        var mathElements = document.querySelectorAll('*');
-        for (var i = 0; i < mathElements.length; i++) {
-          var element = mathElements[i];
-          if (element.textContent && element.children.length === 0) {
-            var text = element.textContent;
-            
-            // 简化一些复杂的LaTeX符号
-            text = text.replace(/\\mathbb\{([^}]+)\}/g, '$1');
-            text = text.replace(/\\Rightarrow/g, '=>');
-            text = text.replace(/\\complement_U/g, '补集');
-            text = text.replace(/\\cap/g, '∩');
-            text = text.replace(/\\cup/g, '∪');
-            text = text.replace(/\\subseteq/g, '⊆');
-            text = text.replace(/\\subset/g, '⊂');
-            text = text.replace(/\\mid/g, '|');
-            
-            if (text !== element.textContent) {
-              element.textContent = text;
-            }
+      if (typeof MathJax === 'undefined') {
+        if (mathRenderAttempts < maxRenderAttempts) {
+          setTimeout(checkAndFixMathRendering, 1000);
+        } else {
+          showMathJaxLoadingError();
+        }
+        return;
+      }
+      
+      // 等待MathJax完全初始化
+      if (MathJax.startup && MathJax.startup.promise) {
+        MathJax.startup.promise.then(function() {
+          applyMobileMathFixes();
+        }).catch(function(err) {
+          console.warn('MathJax启动失败:', err);
+          if (mathRenderAttempts < maxRenderAttempts) {
+            setTimeout(checkAndFixMathRendering, 2000);
+          } else {
+            showMathRenderingFallback();
           }
+        });
+      } else {
+        // 降级处理
+        setTimeout(applyMobileMathFixes, 1000);
+      }
+    }
+    
+    function applyMobileMathFixes() {
+      // 老版本安卓特殊处理
+      if (isOldAndroid) {
+        console.log('应用老版本安卓数学公式修复');
+        applyOldAndroidFixes();
+      }
+      
+      // iOS Safari特殊处理
+      if (isIOS && isSafari) {
+        applyIOSSafariFixes();
+      }
+      
+      // 微信浏览器特殊处理
+      if (isWeChat) {
+        applyWeChatFixes();
+      }
+      
+      // 通用移动端优化
+      if (isMobile) {
+        applyGeneralMobileFixes();
+      }
+      
+      // 强制重新渲染
+      if (MathJax.typesetPromise) {
+        MathJax.typesetPromise().then(function() {
+          console.log('移动端数学公式修复完成');
+          addTouchOptimizations();
+        }).catch(function(err) {
+          console.warn('数学公式重新渲染失败:', err);
+        });
+      }
+    }
+    
+    // 老版本安卓修复
+    function applyOldAndroidFixes() {
+      // 简化复杂的LaTeX符号
+      var textNodes = [];
+      var walker = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+      );
+      
+      var node;
+      while (node = walker.nextNode()) {
+        if (node.textContent.includes('\\')) {
+          textNodes.push(node);
         }
       }
       
-      // 强制重新渲染数学公式
+      textNodes.forEach(function(node) {
+        var text = node.textContent;
+        // 简化一些复杂符号
+        text = text.replace(/\\mathbb\{([^}]+)\}/g, '$1');
+        text = text.replace(/\\Rightarrow/g, '=>');
+        text = text.replace(/\\complement_U/g, '补集');
+        text = text.replace(/\\cap/g, '∩');
+        text = text.replace(/\\cup/g, '∪');
+        text = text.replace(/\\subseteq/g, '⊆');
+        text = text.replace(/\\subset/g, '⊂');
+        text = text.replace(/\\mid/g, '|');
+        text = text.replace(/\\cdot/g, '·');
+        text = text.replace(/\\times/g, '×');
+        text = text.replace(/\\div/g, '÷');
+        
+        if (text !== node.textContent) {
+          node.textContent = text;
+        }
+      });
+    }
+    
+    // iOS Safari修复
+    function applyIOSSafariFixes() {
+      // 添加iOS特定样式
+      var style = document.createElement('style');
+      style.textContent = `
+        mjx-container {
+          -webkit-transform: translateZ(0);
+          -webkit-backface-visibility: hidden;
+        }
+        
+        mjx-container[display="true"] {
+          -webkit-overflow-scrolling: touch;
+          transform: translateZ(0);
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    // 微信浏览器修复
+    function applyWeChatFixes() {
+      document.body.classList.add('MicroMessenger');
+      
+      // 微信浏览器的特殊字体设置
+      var style = document.createElement('style');
+      style.textContent = `
+        .MicroMessenger mjx-container {
+          font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+        }
+        
+        .MicroMessenger mjx-container[display="true"] {
+          margin: 0.5em auto !important;
+          max-width: 95% !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    // 通用移动端修复
+    function applyGeneralMobileFixes() {
+      // 添加通用移动端样式
+      var style = document.createElement('style');
+      style.textContent = `
+        .mobile-device mjx-container {
+          max-width: 100% !important;
+          word-wrap: break-word !important;
+        }
+        
+        .mobile-device mjx-container[display="true"] {
+          overflow-x: auto !important;
+          overflow-y: hidden !important;
+          padding: 0.2em 0 !important;
+          margin: 0.8em 0 !important;
+        }
+        
+        .mobile-device mjx-container[display="false"] {
+          display: inline !important;
+          vertical-align: baseline !important;
+        }
+        
+        /* 滚动条美化 */
+        .mobile-device mjx-container[display="true"]::-webkit-scrollbar {
+          height: 4px !important;
+          background: rgba(0,0,0,0.1) !important;
+        }
+        
+        .mobile-device mjx-container[display="true"]::-webkit-scrollbar-thumb {
+          background: rgba(0,0,0,0.3) !important;
+          border-radius: 2px !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    // 添加触摸优化
+    function addTouchOptimizations() {
+      if (!isMobile) return;
+      
+      var mathContainers = document.querySelectorAll('mjx-container[display="true"]');
+      mathContainers.forEach(function(container) {
+        container.addEventListener('touchstart', function() {
+          container.style.webkitOverflowScrolling = 'touch';
+        }, {passive: true});
+        
+        // 防止双击缩放
+        container.addEventListener('touchend', function(e) {
+          e.preventDefault();
+        });
+      });
+    }
+    
+    // 显示MathJax加载错误
+    function showMathJaxLoadingError() {
+      var notice = document.createElement('div');
+      notice.style.cssText = 'background: #f8d7da; border: 1px solid #f5c6cb; padding: 8px; margin: 10px 0; border-radius: 4px; color: #721c24; text-align: center; font-size: 14px;';
+      notice.innerHTML = '❌ MathJax加载失败，数学公式无法显示';
+      
+      var container = document.getElementById('main-content') || document.body;
+      container.insertBefore(notice, container.firstChild);
+    }
+    
+    // 显示渲染降级提示
+    function showMathRenderingFallback() {
+      var mathElements = document.querySelectorAll('script[type*="math"], .math, [class*="math"]');
+      if (mathElements.length > 0) {
+        var notice = document.createElement('div');
+        notice.style.cssText = 'background: #d1ecf1; border: 1px solid #bee5eb; padding: 8px; margin: 10px 0; border-radius: 4px; color: #0c5460; text-align: center; font-size: 14px;';
+        notice.innerHTML = '📱 移动端数学公式渲染优化中，如有显示问题请刷新页面';
+        
+        var container = document.getElementById('main-content') || document.body;
+        container.insertBefore(notice, container.firstChild);
+        
+        // 5秒后移除提示
+        setTimeout(function() {
+          if (notice.parentNode) {
+            notice.parentNode.removeChild(notice);
+          }
+        }, 5000);
+      }
+    }
+    
+    // 开始执行修复
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', checkAndFixMathRendering);
+    } else {
+      setTimeout(checkAndFixMathRendering, 100);
+    }
+  }
+  
+  // 视口变化时重新渲染（处理横竖屏切换）
+  function handleOrientationChange() {
+    if (!isMobile) return;
+    
+    var orientationChangeHandler = function() {
       setTimeout(function() {
         if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
           MathJax.typesetPromise().then(function() {
-            console.log('安卓设备数学公式渲染完成');
-          }).catch(function(err) {
-            console.error('安卓设备数学公式渲染失败:', err);
-            showMathFallback();
+            console.log('横竖屏切换后数学公式重新渲染完成');
           });
-        } else {
-          showMathFallback();
         }
-      }, 1000);
+      }, 500);
+    };
+    
+    window.addEventListener('orientationchange', orientationChangeHandler);
+    window.addEventListener('resize', function() {
+      clearTimeout(window.resizeTimeout);
+      window.resizeTimeout = setTimeout(orientationChangeHandler, 300);
     });
   }
   
-  // 显示降级提示
-  function showMathFallback() {
-    var mathElements = document.querySelectorAll('*');
-    var hasMath = false;
-    
-    for (var i = 0; i < mathElements.length; i++) {
-      if (mathElements[i].textContent.includes('$')) {
-        hasMath = true;
-        break;
-      }
-    }
-    
-    if (hasMath) {
-      var notice = document.createElement('div');
-      notice.style.cssText = 'background: #e3f2fd; border: 1px solid #2196f3; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 14px;';
-      notice.innerHTML = '📱 检测到您使用的是移动设备，如果数学公式显示异常，请尝试刷新页面或切换到桌面版本。';
-      
-      var content = document.getElementById('main-content') || document.body;
-      content.insertBefore(notice, content.firstChild);
-    }
-  }
+  // 初始化所有修复
+  initMobileMathFix();
+  handleOrientationChange();
   
-  // 触摸事件优化
-  if (isAndroid) {
-    document.addEventListener('touchstart', function() {
-      // 触摸时重新检查数学公式渲染
-      setTimeout(function() {
-        if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
-          MathJax.typesetPromise();
-        }
-      }, 100);
-    });
-  }
 })();
 </script>
 
-<!-- 安卓浏览器CSS修复 -->
+<!-- 移动端增强CSS样式 -->
 <style>
-  /* 安卓浏览器特殊样式修复 */
-  @media screen and (max-width: 768px) {
-    /* 确保数学公式不会被截断 */
-    mjx-container {
-      display: inline-block !important;
-      margin: 0.1em 0 !important;
-      max-width: 100% !important;
-      overflow-x: auto !important;
-      overflow-y: hidden !important;
-    }
-    
-    /* 行内公式优化 */
-    mjx-container[display="false"] {
-      display: inline !important;
-      margin: 0 !important;
-    }
-    
-    /* 块级公式优化 */
-    mjx-container[display="true"] {
-      display: block !important;
-      margin: 1em 0 !important;
-      text-align: center !important;
-    }
-    
-    /* 修复安卓浏览器的字体渲染问题 */
-    mjx-math {
-      font-family: "Times New Roman", serif !important;
-    }
-    
-    /* 确保公式在小屏幕上可见 */
-    .MathJax {
-      font-size: 16px !important;
-      line-height: 1.5 !important;
+  /* 基础移动端优化 */
+  .mobile-device {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  
+  /* 安卓设备特殊处理 */
+  .android-device mjx-container {
+    font-family: "Droid Sans", "Microsoft YaHei", sans-serif !important;
+  }
+  
+  .android-device mjx-container[display="true"] {
+    background: rgba(0,0,0,0.01) !important; /* 强制硬件加速 */
+  }
+  
+  /* iOS设备特殊处理 */
+  .ios-device mjx-container {
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  
+  .ios-device mjx-container[display="true"] {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+  
+  /* 微信浏览器优化 */
+  .wechat-browser mjx-container[display="true"] {
+    margin: 0.5em auto !important;
+    font-size: 0.9em !important;
+  }
+  
+  /* QQ浏览器优化 */
+  .qq-browser mjx-container {
+    font-weight: normal !important;
+  }
+  
+  /* 响应式断点优化 */
+  @media screen and (max-width: 414px) {
+    .mobile-device mjx-container {
+      font-size: 0.85em !important;
     }
   }
   
-  /* 针对安卓微信浏览器的特殊修复 */
-  @media screen and (max-width: 480px) {
-    mjx-container {
-      font-size: 14px !important;
+  @media screen and (max-width: 375px) {
+    .mobile-device mjx-container {
+      font-size: 0.8em !important;
     }
     
-    mjx-container[display="true"] {
-      overflow-x: scroll !important;
-      -webkit-overflow-scrolling: touch !important;
+    .mobile-device mjx-container[display="true"] {
+      margin: 0.6em 0 !important;
+    }
+  }
+  
+  @media screen and (max-width: 320px) {
+    .mobile-device mjx-container {
+      font-size: 0.75em !important;
+    }
+  }
+  
+  /* 横屏模式优化 */
+  @media screen and (orientation: landscape) and (max-height: 500px) {
+    .mobile-device mjx-container[display="true"] {
+      margin: 0.3em 0 !important;
+      font-size: 0.9em !important;
+    }
+  }
+  
+  /* 高DPI屏幕优化 */
+  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .mobile-device mjx-container {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
   }
 </style> 

@@ -9,6 +9,11 @@ theme: minima                  # 使用的主题（如 minima、jekyll-theme-cay
 plugins:                       # 启用的插件列表
   - jekyll-seo-tag             # SEO 优化插件
 
+# 禁用RSS feed生成
+feed:
+  disable: true
+show_excerpts: false
+
 # Markdown 设置以支持 MathJax
 markdown: kramdown
 kramdown:

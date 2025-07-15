@@ -1,7 +1,10 @@
 <!-- 引入 MathJax 以支持 LaTeX 公式渲染 -->
 <script>
-  // 检测是否为移动设备
+  // 增强的移动设备检测
   var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  var isAndroid = /Android/.test(navigator.userAgent);
+  var isWeChat = /MicroMessenger/i.test(navigator.userAgent);
   
   window.MathJax = {
     tex: {
@@ -10,115 +13,225 @@
       processEscapes: true,
       processEnvironments: true,
       processRefs: true,
-      // 移动端特殊配置
-      packages: {'[+]': ['base', 'ams', 'newcommand', 'configmacros']}
+      packages: {'[+]': ['base', 'ams', 'newcommand', 'configmacros', 'noerrors']}
     },
     options: {
       skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
       processHtmlClass: 'tex2jax_process',
       ignoreHtmlClass: 'tex2jax_ignore',
-      renderActions: {
-        findScript: [10, function (doc) {
-          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
-            const display = !!node.type.match(/; *mode=display/);
-            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
-            const text = document.createTextNode('');
-            node.parentNode.replaceChild(text, node);
-            math.start = {node: text, delim: '', n: 0};
-            math.end = {node: text, delim: '', n: 0};
-            doc.math.push(math);
-          }
-        }, '']
+      enableMenu: false, // 在移动端禁用右键菜单
+      menuOptions: {
+        settings: {
+          zoom: 'None'  // 禁用缩放以避免移动端问题
+        }
       }
     },
-    // 针对移动设备的特殊配置
+    // 针对不同设备的渲染配置
     chtml: {
-      scale: isMobile ? 0.9 : 1,
+      scale: isMobile ? 0.85 : 1,
       minScale: 0.5,
       matchFontHeight: false,
-      fontURL: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2'
+      fontURL: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
+      adaptiveCSS: true,
+      // 移动端优化
+      ...(isMobile && {
+        exFactor: 0.5,
+        displayAlign: 'center',
+        displayIndent: '0'
+      })
     },
     svg: {
-      scale: isMobile ? 0.9 : 1,
+      scale: isMobile ? 0.85 : 1,
       minScale: 0.5,
-      fontCache: 'local'
+      fontCache: 'local',
+      // 移动端SVG渲染优化
+      ...(isMobile && {
+        exFactor: 0.5
+      })
     },
     startup: {
       ready: function () {
         MathJax.startup.defaultReady();
-        // 确保在移动设备上正确渲染
+        
+        // 移动端特殊处理
         if (isMobile) {
-          document.addEventListener('DOMContentLoaded', function() {
-            MathJax.typesetPromise();
-          });
+          // 延迟渲染以确保DOM完全加载
+          setTimeout(function() {
+            MathJax.typesetPromise().then(function() {
+              console.log('移动端MathJax渲染完成');
+              // 为移动端添加滚动优化
+              addMobileScrollOptimization();
+            }).catch(function(err) {
+              console.warn('MathJax渲染出现问题:', err);
+              showMathRenderingFallback();
+            });
+          }, isMobile ? 500 : 100);
         }
       }
+    },
+    loader: {
+      load: ['[tex]/noerrors']
     }
   };
+  
+  // 移动端滚动优化
+  function addMobileScrollOptimization() {
+    if (!isMobile) return;
+    
+    var style = document.createElement('style');
+    style.textContent = `
+      mjx-container[display="true"] {
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        max-width: 100% !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: thin !important;
+      }
+      
+      mjx-container[display="true"]::-webkit-scrollbar {
+        height: 3px !important;
+      }
+      
+      mjx-container[display="true"]::-webkit-scrollbar-thumb {
+        background-color: rgba(0,0,0,0.3) !important;
+        border-radius: 3px !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  // 渲染失败降级处理
+  function showMathRenderingFallback() {
+    var mathElements = document.querySelectorAll('script[type*="math"], .math, [class*="math"]');
+    if (mathElements.length > 0) {
+      var notice = document.createElement('div');
+      notice.style.cssText = 'background: #fff3cd; border: 1px solid #ffeaa7; padding: 8px; margin: 10px 0; border-radius: 4px; font-size: 14px; text-align: center;';
+      notice.innerHTML = '📱 数学公式正在加载中，如显示异常请刷新页面...';
+      
+      var container = document.getElementById('main-content') || document.body;
+      container.insertBefore(notice, container.firstChild);
+      
+      // 3秒后移除提示
+      setTimeout(function() {
+        if (notice.parentNode) {
+          notice.parentNode.removeChild(notice);
+        }
+      }, 3000);
+    }
+  }
 </script>
 
-<!-- 多CDN备选方案，提高加载成功率 -->
+<!-- 多CDN加载策略，提高移动端加载成功率 -->
 <script>
-  // 主CDN
-  var script = document.createElement('script');
-  script.type = 'text/javascript';
-  script.id = 'MathJax-script';
-  script.async = true;
-  script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
-  
-  // 备用CDN
-  script.onerror = function() {
-    console.log('主CDN加载失败，尝试备用CDN');
-    var backupScript = document.createElement('script');
-    backupScript.type = 'text/javascript';
-    backupScript.id = 'MathJax-script-backup';
-    backupScript.async = true;
-    backupScript.src = 'https://polyfill.io/v3/polyfill.min.js?features=es6';
+  (function() {
+    var cdnList = [
+      'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js',
+      'https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js',
+      'https://cdn.bootcdn.net/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js'
+    ];
     
-    backupScript.onload = function() {
-      var mathJaxScript = document.createElement('script');
-      mathJaxScript.type = 'text/javascript';
-      mathJaxScript.async = true;
-      mathJaxScript.src = 'https://cdn.bootcdn.net/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js';
+    var currentCdnIndex = 0;
+    
+    function loadMathJax() {
+      if (currentCdnIndex >= cdnList.length) {
+        console.error('所有MathJax CDN都加载失败');
+        showCdnFailureNotice();
+        return;
+      }
       
-      mathJaxScript.onerror = function() {
-        console.log('备用CDN也加载失败，使用本地提示');
-        document.body.insertAdjacentHTML('beforeend', 
-          '<div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin: 10px; border-radius: 5px;">' +
-          '⚠️ 数学公式加载失败，请检查网络连接或刷新页面重试</div>');
+      var script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.id = 'MathJax-script-' + currentCdnIndex;
+      script.async = true;
+      script.src = cdnList[currentCdnIndex];
+      
+      script.onload = function() {
+        console.log('MathJax从CDN加载成功:', cdnList[currentCdnIndex]);
       };
       
-      document.head.appendChild(mathJaxScript);
-    };
+      script.onerror = function() {
+        console.warn('CDN加载失败:', cdnList[currentCdnIndex]);
+        document.head.removeChild(script);
+        currentCdnIndex++;
+        setTimeout(loadMathJax, 1000); // 延迟1秒后尝试下一个CDN
+      };
+      
+      document.head.appendChild(script);
+    }
     
-    document.head.appendChild(backupScript);
-  };
-  
-  document.head.appendChild(script);
+    function showCdnFailureNotice() {
+      var notice = document.createElement('div');
+      notice.style.cssText = 'background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0; border-radius: 5px; color: #721c24; text-align: center;';
+      notice.innerHTML = '⚠️ 数学公式加载失败，请检查网络连接后刷新页面';
+      
+      var container = document.getElementById('main-content') || document.body;
+      container.insertBefore(notice, container.firstChild);
+    }
+    
+    // 开始加载
+    loadMathJax();
+  })();
 </script>
 
-<!-- 移动端优化样式 -->
+<!-- 移动端专用样式优化 -->
 <style>
+  /* 基础样式 */
+  mjx-container {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  
+  /* 移动端响应式设计 */
   @media screen and (max-width: 768px) {
     .MathJax {
       font-size: 0.9em !important;
     }
     
-    .MathJax_Display {
-      overflow-x: auto;
-      overflow-y: hidden;
+    mjx-container[display="true"] {
+      margin: 0.8em 0 !important;
+      padding: 0 !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      max-width: 100% !important;
+      -webkit-overflow-scrolling: touch !important;
     }
     
-    mjx-container[jax="CHTML"][display="true"] {
-      overflow-x: auto;
-      overflow-y: hidden;
-      max-width: 100%;
+    mjx-container[display="false"] {
+      display: inline !important;
+      margin: 0 0.1em !important;
     }
   }
   
-  /* 确保公式在小屏幕上可滚动 */
-  mjx-container {
-    overflow-x: auto;
-    overflow-y: hidden;
+  /* 小屏幕优化 */
+  @media screen and (max-width: 480px) {
+    .MathJax {
+      font-size: 0.85em !important;
+    }
+    
+    mjx-container[display="true"] {
+      font-size: 0.9em !important;
+    }
+  }
+  
+  /* 超小屏幕 */
+  @media screen and (max-width: 320px) {
+    .MathJax {
+      font-size: 0.8em !important;
+    }
+  }
+  
+  /* iOS Safari特殊处理 */
+  @supports (-webkit-touch-callout: none) {
+    mjx-container {
+      -webkit-text-size-adjust: none;
+    }
+  }
+  
+  /* 微信浏览器优化 */
+  @media screen and (max-width: 480px) {
+    body.MicroMessenger mjx-container[display="true"] {
+      font-size: 0.85em !important;
+      margin: 0.5em 0 !important;
+    }
   }
 </style>
