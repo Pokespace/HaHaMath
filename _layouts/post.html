@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ page.title | escape }} - {{ site.title | escape }}</title>
     {%- if site.seo %}{% seo %}{% endif -%}
-    {%- if site.feed %}{% feed_meta %}{% endif -%}
+    <!-- 已移除 feed_meta，防止出现 RSS 订阅 -->
     <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}">
     {% include mathjax.html %}
   </head>
