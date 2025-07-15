@@ -7,7 +7,6 @@
     <meta name="format-detection" content="telephone=no">
     <title>{{ page.title | escape }} - {{ site.title | escape }}</title>
     {%- if site.seo %}{% seo %}{% endif -%}
-    <!-- 已移除 feed_meta，防止出现 RSS 订阅 -->
     {%- if site.stylesheet %}<link rel="stylesheet" href="{{ site.stylesheet }}">{% endif -%}
     
     <!-- 预加载MathJax字体以提高渲染速度 -->
