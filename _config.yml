@@ -6,13 +6,21 @@ title: HaHaMath                # 站点标题
 lang: zh-CN                    # 站点语言
 description: "数学学习与分享"   # 站点描述
 theme: minima                  # 使用的主题（如 minima、jekyll-theme-cayman 等）
-plugins:                       # 启用的插件列表
+
+# 插件配置 - 明确不包含jekyll-feed
+plugins:                       
   - jekyll-seo-tag             # SEO 优化插件
 
 # 禁用RSS feed生成
 feed:
   disable: true
 show_excerpts: false
+
+# 明确禁用feed相关功能和RSS链接
+minima:
+  show_excerpts: false
+  date_format: "%Y-%m-%d"
+  # 不设置feed相关的配置
 
 # Markdown 设置以支持 MathJax
 markdown: kramdown
@@ -29,7 +37,6 @@ kramdown:
 # paginate: 5                  # 每页文章数（需配合分页插件）
 # paginate_path: "/page:num/"  # 分页路径格式
 # timezone: Asia/Shanghai      # 时区设置
-# show_excerpts: true          # 是否显示摘要
 # excerpt_separator: "<!--more-->" # 摘要分隔符
 # collections:                 # 自定义内容集合
 #   tutorials:

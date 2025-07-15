@@ -1,2 +1,46 @@
 {% comment %}自定义 head，用于插入 MathJax 支持{% endcomment %}
 {% include mathjax.html %}
+
+<!-- 隐藏RSS相关元素的CSS -->
+<style>
+  /* 隐藏任何RSS相关的链接和元素 */
+  .rss-subscribe,
+  .feed-subscribe,
+  a[href*="feed.xml"],
+  a[href*="rss"],
+  a[href*="atom.xml"] {
+    display: none !important;
+  }
+  
+  /* 美化主页样式 */
+  .home {
+    max-width: 100%;
+  }
+  
+  .post-list {
+    list-style: none;
+    padding-left: 0;
+  }
+  
+  .post-list li {
+    margin-bottom: 1em;
+    padding: 1em;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    background-color: #f6f8fa;
+  }
+  
+  .post-meta {
+    color: #586069;
+    font-size: 0.9em;
+  }
+  
+  .post-link {
+    text-decoration: none;
+    color: #0366d6;
+  }
+  
+  .post-link:hover {
+    text-decoration: underline;
+  }
+</style>
