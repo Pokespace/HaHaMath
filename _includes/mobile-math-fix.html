@@ -1,0 +1,143 @@
+<!-- 移动端数学公式渲染修复脚本 -->
+<script>
+(function() {
+  'use strict';
+  
+  // 检测安卓浏览器
+  var isAndroid = /Android/i.test(navigator.userAgent);
+  var isOldAndroid = /Android [1-4]/i.test(navigator.userAgent);
+  
+  if (isAndroid) {
+    // 安卓设备特殊处理
+    document.addEventListener('DOMContentLoaded', function() {
+      
+      // 为老版本安卓提供降级方案
+      if (isOldAndroid) {
+        console.log('检测到老版本安卓，启用降级方案');
+        
+        // 替换复杂公式为简化版本
+        var mathElements = document.querySelectorAll('*');
+        for (var i = 0; i < mathElements.length; i++) {
+          var element = mathElements[i];
+          if (element.textContent && element.children.length === 0) {
+            var text = element.textContent;
+            
+            // 简化一些复杂的LaTeX符号
+            text = text.replace(/\\mathbb\{([^}]+)\}/g, '$1');
+            text = text.replace(/\\Rightarrow/g, '=>');
+            text = text.replace(/\\complement_U/g, '补集');
+            text = text.replace(/\\cap/g, '∩');
+            text = text.replace(/\\cup/g, '∪');
+            text = text.replace(/\\subseteq/g, '⊆');
+            text = text.replace(/\\subset/g, '⊂');
+            text = text.replace(/\\mid/g, '|');
+            
+            if (text !== element.textContent) {
+              element.textContent = text;
+            }
+          }
+        }
+      }
+      
+      // 强制重新渲染数学公式
+      setTimeout(function() {
+        if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+          MathJax.typesetPromise().then(function() {
+            console.log('安卓设备数学公式渲染完成');
+          }).catch(function(err) {
+            console.error('安卓设备数学公式渲染失败:', err);
+            showMathFallback();
+          });
+        } else {
+          showMathFallback();
+        }
+      }, 1000);
+    });
+  }
+  
+  // 显示降级提示
+  function showMathFallback() {
+    var mathElements = document.querySelectorAll('*');
+    var hasMath = false;
+    
+    for (var i = 0; i < mathElements.length; i++) {
+      if (mathElements[i].textContent.includes('$')) {
+        hasMath = true;
+        break;
+      }
+    }
+    
+    if (hasMath) {
+      var notice = document.createElement('div');
+      notice.style.cssText = 'background: #e3f2fd; border: 1px solid #2196f3; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 14px;';
+      notice.innerHTML = '📱 检测到您使用的是移动设备，如果数学公式显示异常，请尝试刷新页面或切换到桌面版本。';
+      
+      var content = document.getElementById('main-content') || document.body;
+      content.insertBefore(notice, content.firstChild);
+    }
+  }
+  
+  // 触摸事件优化
+  if (isAndroid) {
+    document.addEventListener('touchstart', function() {
+      // 触摸时重新检查数学公式渲染
+      setTimeout(function() {
+        if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+          MathJax.typesetPromise();
+        }
+      }, 100);
+    });
+  }
+})();
+</script>
+
+<!-- 安卓浏览器CSS修复 -->
+<style>
+  /* 安卓浏览器特殊样式修复 */
+  @media screen and (max-width: 768px) {
+    /* 确保数学公式不会被截断 */
+    mjx-container {
+      display: inline-block !important;
+      margin: 0.1em 0 !important;
+      max-width: 100% !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+    }
+    
+    /* 行内公式优化 */
+    mjx-container[display="false"] {
+      display: inline !important;
+      margin: 0 !important;
+    }
+    
+    /* 块级公式优化 */
+    mjx-container[display="true"] {
+      display: block !important;
+      margin: 1em 0 !important;
+      text-align: center !important;
+    }
+    
+    /* 修复安卓浏览器的字体渲染问题 */
+    mjx-math {
+      font-family: "Times New Roman", serif !important;
+    }
+    
+    /* 确保公式在小屏幕上可见 */
+    .MathJax {
+      font-size: 16px !important;
+      line-height: 1.5 !important;
+    }
+  }
+  
+  /* 针对安卓微信浏览器的特殊修复 */
+  @media screen and (max-width: 480px) {
+    mjx-container {
+      font-size: 14px !important;
+    }
+    
+    mjx-container[display="true"] {
+      overflow-x: scroll !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+  }
+</style> 

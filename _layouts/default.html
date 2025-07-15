@@ -1,16 +1,48 @@
 <!DOCTYPE html>
-<html lang="{{ page.lang | default: site.lang | default: 'en' }}">
+<html lang="{{ page.lang | default: site.lang | default: 'zh-CN' }}">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="format-detection" content="telephone=no">
     <title>{{ page.title | escape }} - {{ site.title | escape }}</title>
     {%- if site.seo %}{% seo %}{% endif -%}
     {%- if site.feed %}{% feed_meta %}{% endif -%}
     {%- if site.stylesheet %}<link rel="stylesheet" href="{{ site.stylesheet }}">{% endif -%}
+    
+    <!-- 预加载MathJax字体以提高渲染速度 -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2" as="font" type="font/woff2" crossorigin>
+    
     {% include mathjax.html %}
+    {% include mobile-math-fix.html %}
   </head>
   <body>
-    {{ content }}
+    <div id="main-content">
+      {{ content }}
+    </div>
+    
+    <!-- 添加加载提示 -->
+    <script>
+      // 显示数学公式加载状态
+      document.addEventListener('DOMContentLoaded', function() {
+        var mathElements = document.querySelectorAll('*');
+        var hasMath = false;
+        
+        for (var i = 0; i < mathElements.length; i++) {
+          if (mathElements[i].textContent.includes('$') || mathElements[i].textContent.includes('\\(')) {
+            hasMath = true;
+            break;
+          }
+        }
+        
+        if (hasMath && typeof MathJax !== 'undefined') {
+          MathJax.startup.promise.then(function() {
+            console.log('MathJax 加载完成');
+          }).catch(function(err) {
+            console.error('MathJax 加载失败:', err);
+          });
+        }
+      });
+    </script>
   </body>
 </html>
